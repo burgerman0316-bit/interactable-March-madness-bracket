@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>March Madness 2026 - 68 Teams</title>
+    <title>March Madness 2026 - Draggable 68-Team Bracket</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
@@ -24,48 +24,62 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding-top: 130px; /* Space for the fixed team bar */
-            overflow-x: auto;
+            padding-top: 110px;
+            overflow: hidden; 
+            height: 100vh;
+            /* DISABLE HIGHLIGHTING DURING DRAG */
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         /* FIXED TEAM POOL */
         #team-pool {
-            position: fixed; top: 0; left: 0; width: 100%; height: 110px;
+            position: fixed; top: 0; left: 0; width: 100%; height: 95px;
             background: var(--card); display: flex; flex-direction: row;
-            overflow-x: auto; padding: 10px; gap: 10px;
-            border-bottom: 2px solid var(--accent); z-index: 1000; align-items: center;
+            flex-wrap: nowrap; overflow-x: auto; padding: 10px; gap: 10px;
+            border-bottom: 2px solid var(--accent); z-index: 1001; align-items: center;
         }
 
         .team-card {
             min-width: 100px; padding: 8px; background: var(--accent);
             color: var(--bg); cursor: grab; border-radius: 4px;
             text-align: center; font-size: 10px; font-weight: bold; flex-shrink: 0;
-            touch-action: none;
+            touch-action: none; white-space: nowrap;
         }
 
-        /* FIRST FOUR SECTION */
-        .play-in-header { text-align: center; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; }
-        .play-in-container {
-            display: flex; justify-content: center; gap: 15px; padding: 20px;
-            border-bottom: 1px solid var(--line-color); margin-bottom: 30px;
+        /* DRAGGABLE VIEWPORT */
+        #bracket-viewport {
+            width: 100%;
+            height: calc(100vh - 180px);
+            overflow: hidden; 
+            cursor: grab;
+            position: relative;
+            background: var(--bg);
         }
+
+        #bracket-viewport:active { cursor: grabbing; }
+
+        #bracket-content {
+            position: absolute;
+            padding: 60px;
+            min-width: 1800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .play-in-header { text-transform: uppercase; letter-spacing: 2px; font-size: 14px; margin-bottom: 10px; }
+        .play-in-container { display: flex; gap: 15px; padding: 20px; border-bottom: 1px solid var(--line-color); margin-bottom: 30px; }
         .play-in-game { width: 120px; text-align: center; }
-        .play-in-label { font-size: 8px; color: #888; margin-bottom: 4px; }
 
-        /* MAIN BRACKET */
-        .main-layout { display: flex; justify-content: center; min-width: 1500px; padding-bottom: 120px; }
+        .main-layout { display: flex; justify-content: center; }
         .bracket-side { display: flex; flex-direction: row; }
         .bracket-side.right { flex-direction: row-reverse; }
         .round { display: flex; flex-direction: column; width: var(--slot-width); }
-        
         .round:not(.final) { margin-right: 35px; }
         .right .round:not(.final) { margin-right: 0; margin-left: 35px; }
 
-        .slot-wrapper {
-            display: flex; flex-direction: column; justify-content: center;
-            flex-grow: 1; position: relative; min-height: 35px;
-        }
-
+        .slot-wrapper { display: flex; flex-direction: column; justify-content: center; flex-grow: 1; position: relative; min-height: 35px; }
         .slot {
             width: 100%; height: var(--slot-height); background: var(--slot-bg);
             border-bottom: 2px solid var(--accent); display: flex;
@@ -73,18 +87,11 @@
             z-index: 2; color: var(--text);
         }
 
-        .slot .team-card { background: transparent; color: var(--text); padding: 0; min-width: auto; }
-
-        /* LINES */
-        .left .round:not(.final) .slot-wrapper::after {
-            content: ""; position: absolute; right: -35px; width: 35px; border-right: 2px solid var(--line-color);
-        }
+        /* BRACKET LINES */
+        .left .round:not(.final) .slot-wrapper::after { content: ""; position: absolute; right: -35px; width: 35px; border-right: 2px solid var(--line-color); }
         .left .slot-wrapper:nth-child(odd)::after { top: 50%; height: 50%; border-top: 2px solid var(--line-color); }
         .left .slot-wrapper:nth-child(even)::after { bottom: 50%; height: 50%; border-bottom: 2px solid var(--line-color); }
-
-        .right .round:not(.final) .slot-wrapper::after {
-            content: ""; position: absolute; left: -35px; width: 35px; border-left: 2px solid var(--line-color);
-        }
+        .right .round:not(.final) .slot-wrapper::after { content: ""; position: absolute; left: -35px; width: 35px; border-left: 2px solid var(--line-color); }
         .right .slot-wrapper:nth-child(odd)::after { top: 50%; height: 50%; border-top: 2px solid var(--line-color); }
         .right .slot-wrapper:nth-child(even)::after { bottom: 50%; height: 50%; border-bottom: 2px solid var(--line-color); }
 
@@ -92,7 +99,7 @@
 
         #submit-section {
             position: fixed; bottom: 0; width: 100%; background: var(--card);
-            padding: 15px; text-align: center; border-top: 2px solid var(--accent); z-index: 1000;
+            padding: 15px; text-align: center; border-top: 2px solid var(--accent); z-index: 1001;
         }
         button { padding: 12px 30px; background: var(--accent); color: var(--bg); border: none; border-radius: 20px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
     </style>
@@ -100,125 +107,60 @@
 <body>
 
     <div id="team-pool">
-        <div class="team-card">Duke</div>
-        <div class="team-card">UConn</div>
-        <div class="team-card">Michigan State</div>
-        <div class="team-card">Arkansas</div>
-        <div class="team-card">Vanderbilt</div>
-        <div class="team-card">North Carolina</div>
-        <div class="team-card">UCLA</div>
-        <div class="team-card">Villanova</div>
-        <div class="team-card">TCU</div>
-        <div class="team-card">UCF</div>
-        <div class="team-card">VCU</div>
-        <div class="team-card">McNeese</div>
-        <div class="team-card">Hawai'i</div>
-        <div class="team-card">North Dakota State</div>
-        <div class="team-card">Queens (N.C.)</div>
-        <div class="team-card">Siena</div>
-        <div class="team-card">Florida</div>
-        <div class="team-card">Iowa State</div>
-        <div class="team-card">Illinois</div>
-        <div class="team-card">Nebraska</div>
-        <div class="team-card">St. John's</div>
-        <div class="team-card">Louisville</div>
-        <div class="team-card">Saint Mary's</div>
-        <div class="team-card">Georgia</div>
-        <div class="team-card">Saint Louis</div>
-        <div class="team-card">Texas A&M</div>
-        <div class="team-card">South Florida</div>
-        <div class="team-card">High Point</div>
-        <div class="team-card">Troy</div>
-        <div class="team-card">Penn</div>
-        <div class="team-card">Furman</div>
-        <div class="team-card">Howard</div>
-        <div class="team-card">Michigan</div>
-        <div class="team-card">Purdue</div>
-        <div class="team-card">Gonzaga</div>
-        <div class="team-card">Kansas</div>
-        <div class="team-card">Wisconsin</div>
-        <div class="team-card">BYU</div>
-        <div class="team-card">Ohio State</div>
-        <div class="team-card">Clemson</div>
-        <div class="team-card">Iowa</div>
-        <div class="team-card">Missouri</div>
-        <div class="team-card">Miami (OH)</div>
-        <div class="team-card">Northern Iowa</div>
-        <div class="team-card">Cal Baptist</div>
-        <div class="team-card">Kennesaw State</div>
-        <div class="team-card">Idaho</div>
-        <div class="team-card">Prairie View A&M</div>
-        <div class="team-card">Arizona</div>
-        <div class="team-card">Houston</div>
-        <div class="team-card">Virginia</div>
-        <div class="team-card">Alabama</div>
-        <div class="team-card">Texas Tech</div>
-        <div class="team-card">Tennessee</div>
-        <div class="team-card">Kentucky</div>
-        <div class="team-card">Oregon</div>
-        <div class="team-card">Utah State</div>
-        <div class="team-card">Santa Clara</div>
-        <div class="team-card">Texas</div>
-        <div class="team-card">Akron</div>
-        <div class="team-card">Hofstra</div>
-        <div class="team-card">Wright State</div>
-        <div class="team-card">Tennessee State</div>
-        <div class="team-card">Long Island Univ.</div>
-        <div class="team-card">NC State</div>
-        <div class="team-card">UMBC</div>
-        <div class="team-card">Lehigh</div>
-        <div class="team-card">SMU</div>
+        <!-- EAST -->
+        <div class="team-card">Duke (1)</div><div class="team-card">UConn (2)</div><div class="team-card">Michigan St (3)</div>
+        <div class="team-card">Arkansas (4)</div><div class="team-card">Vanderbilt (5)</div><div class="team-card">UNC (6)</div>
+        <div class="team-card">UCLA (7)</div><div class="team-card">Villanova (8)</div><div class="team-card">TCU (9)</div>
+        <div class="team-card">UCF (10)</div><div class="team-card">VCU (11)</div><div class="team-card">McNeese (12)</div>
+        <div class="team-card">Hawai'i (13)</div><div class="team-card">N. Dakota St (14)</div><div class="team-card">Queens (15)</div>
+        <div class="team-card">Siena (16)</div>
+        <!-- SOUTH -->
+        <div class="team-card">Florida (1)</div><div class="team-card">Iowa St (2)</div><div class="team-card">Illinois (3)</div>
+        <div class="team-card">Nebraska (4)</div><div class="team-card">St. John's (5)</div><div class="team-card">Louisville (6)</div>
+        <div class="team-card">St. Mary's (7)</div><div class="team-card">Georgia (8)</div><div class="team-card">St. Louis (9)</div>
+        <div class="team-card">Texas A&M (10)</div><div class="team-card">S. Florida (11)</div><div class="team-card">High Point (12)</div>
+        <div class="team-card">Troy (13)</div><div class="team-card">Penn (14)</div><div class="team-card">Furman (15)</div>
+        <div class="team-card">Howard (16)</div>
+        <!-- MIDWEST -->
+        <div class="team-card">Michigan (1)</div><div class="team-card">Purdue (2)</div><div class="team-card">Gonzaga (3)</div>
+        <div class="team-card">Kansas (4)</div><div class="team-card">Wisconsin (5)</div><div class="team-card">BYU (6)</div>
+        <div class="team-card">Ohio St (7)</div><div class="team-card">Clemson (8)</div><div class="team-card">Iowa (9)</div>
+        <div class="team-card">Missouri (10)</div><div class="team-card">Miami OH (11)</div><div class="team-card">N. Iowa (12)</div>
+        <div class="team-card">Cal Baptist (13)</div><div class="team-card">Kennesaw St (14)</div><div class="team-card">Idaho (15)</div>
+        <div class="team-card">Prairie View (16)</div>
+        <!-- WEST -->
+        <div class="team-card">Arizona (1)</div><div class="team-card">Houston (2)</div><div class="team-card">Virginia (3)</div>
+        <div class="team-card">Alabama (4)</div><div class="team-card">Texas Tech (5)</div><div class="team-card">Tennessee (6)</div>
+        <div class="team-card">Kentucky (7)</div><div class="team-card">Oregon (8)</div><div class="team-card">Utah St (9)</div>
+        <div class="team-card">Santa Clara (10)</div><div class="team-card">Texas (11)</div><div class="team-card">Akron (12)</div>
+        <div class="team-card">Hofstra (13)</div><div class="team-card">Wright St (14)</div><div class="team-card">Tenn St (15)</div>
+        <div class="team-card">LIU (16)</div>
+        <!-- EXTRA FIRST FOUR -->
+        <div class="team-card">NC State</div><div class="team-card">UMBC</div><div class="team-card">Lehigh</div><div class="team-card">SMU</div>
     </div>
 
-    <div class="play-in-header">The First Four</div>
-    <div class="play-in-container">
-        <!-- Game 1 & 2 feed into Left Bracket, Game 3 & 4 into Right Bracket -->
-        <div class="play-in-game">
-            <div class="play-in-label">GAME 1</div>
-            <div class="slot" data-id="FF1-A"></div>
-            <div class="slot" data-id="FF1-B"></div>
-        </div>
-        <div class="play-in-game">
-            <div class="play-in-label">GAME 2</div>
-            <div class="slot" data-id="FF2-A"></div>
-            <div class="slot" data-id="FF2-B"></div>
-        </div>
-        <div class="play-in-game">
-            <div class="play-in-label">GAME 3</div>
-            <div class="slot" data-id="FF3-A"></div>
-            <div class="slot" data-id="FF3-B"></div>
-        </div>
-        <div class="play-in-game">
-            <div class="play-in-label">GAME 4</div>
-            <div class="slot" data-id="FF4-A"></div>
-            <div class="slot" data-id="FF4-B"></div>
-        </div>
-    </div>
-
-    <div class="main-layout">
-        <!-- Left Side: 32 Teams (16 slots) -->
-        <div class="bracket-side left">
-            <div class="round" id="L1"></div>
-            <div class="round" id="L2"></div>
-            <div class="round" id="L3"></div>
-            <div class="round" id="L4"></div>
-            <div class="round final" id="L5"></div>
-        </div>
-
-        <div class="center-court">
-            <span style="font-size: 10px; margin-bottom: 5px; letter-spacing: 1px;">NATIONAL CHAMPION</span>
-            <div class="slot-wrapper" style="width: 100%;">
-                <div class="slot" style="border: 2px solid var(--accent); height: 50px;" data-id="CHAMPION"></div>
+    <div id="bracket-viewport">
+        <div id="bracket-content">
+            <div class="play-in-header">The First Four</div>
+            <div class="play-in-container">
+                <div class="play-in-game"><div class="slot" data-id="FF1-A"></div><div class="slot" data-id="FF1-B"></div></div>
+                <div class="play-in-game"><div class="slot" data-id="FF2-A"></div><div class="slot" data-id="FF2-B"></div></div>
+                <div class="play-in-game"><div class="slot" data-id="FF3-A"></div><div class="slot" data-id="FF3-B"></div></div>
+                <div class="play-in-game"><div class="slot" data-id="FF4-A"></div><div class="slot" data-id="FF4-B"></div></div>
             </div>
-        </div>
 
-        <!-- Right Side: 32 Teams (16 slots) -->
-        <div class="bracket-side right">
-            <div class="round" id="R1"></div>
-            <div class="round" id="R2"></div>
-            <div class="round" id="R3"></div>
-            <div class="round" id="R4"></div>
-            <div class="round final" id="R5"></div>
+            <div class="main-layout">
+                <div class="bracket-side left">
+                    <div class="round" id="L1"></div><div class="round" id="L2"></div><div class="round" id="L3"></div><div class="round" id="L4"></div><div class="round final" id="L5"></div>
+                </div>
+                <div class="center-court">
+                    <div class="slot" style="height: 50px; width: 100%; border: 2px solid var(--accent);" data-id="CHAMPION"></div>
+                    <span style="font-size: 10px; margin-top: 10px;">NATIONAL CHAMPION</span>
+                </div>
+                <div class="bracket-side right">
+                    <div class="round" id="R1"></div><div class="round" id="R2"></div><div class="round" id="R3"></div><div class="round" id="R4"></div><div class="round final" id="R5"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -230,31 +172,48 @@
     <script>
         (function() { emailjs.init("RsAYqiwym2mViUR8u"); })();
 
+        // DRAG-TO-PAN 1:1 LOGIC
+        const slider = document.getElementById('bracket-viewport');
+        let isDown = false; let startX; let startY; let scrollLeft; let scrollTop;
+
+        slider.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.team-card')) return; 
+            isDown = true;
+            startX = e.pageX - slider.offsetLeft;
+            startY = e.pageY - slider.offsetTop;
+            scrollLeft = slider.scrollLeft;
+            scrollTop = slider.scrollTop;
+        });
+
+        slider.addEventListener('mouseleave', () => { isDown = false; });
+        slider.addEventListener('mouseup', () => { isDown = false; });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const y = e.pageY - slider.offsetTop;
+            const walkX = (x - startX); // 1:1 movement
+            const walkY = (y - startY); 
+            slider.scrollLeft = scrollLeft - walkX;
+            slider.scrollTop = scrollTop - walkY;
+        });
+
+        // BRACKET GENERATION
         function createSide(prefix, roundsData) {
             roundsData.forEach(round => {
                 const container = document.getElementById(prefix + round.num);
                 for(let i=1; i<=round.count; i++) {
-                    const wrap = document.createElement('div');
-                    wrap.className = 'slot-wrapper';
-                    const slot = document.createElement('div');
-                    slot.className = 'slot';
+                    const wrap = document.createElement('div'); wrap.className = 'slot-wrapper';
+                    const slot = document.createElement('div'); slot.className = 'slot';
                     slot.setAttribute('data-id', `${prefix}${round.num}-${i}`);
-                    wrap.appendChild(slot);
-                    container.appendChild(wrap);
+                    wrap.appendChild(slot); container.appendChild(wrap);
                 }
             });
         }
 
-        const bracketData = [
-            {num: 1, count: 16}, // Round of 64 per side
-            {num: 2, count: 8},
-            {num: 3, count: 4},
-            {num: 4, count: 2},
-            {num: 5, count: 1}
-        ];
-
-        createSide('L', bracketData);
-        createSide('R', bracketData);
+        const bData = [{num: 1, count: 16}, {num: 2, count: 8}, {num: 3, count: 4}, {num: 4, count: 2}, {num: 5, count: 1}];
+        createSide('L', bData); createSide('R', bData);
 
         const pool = document.getElementById('team-pool');
         const dragConfig = {
@@ -267,22 +226,10 @@
 
         function submitBracket() {
             const slots = document.querySelectorAll('.slot');
-            const filled = Array.from(slots).filter(s => s.children.length > 0);
-            
-            if (filled.length < slots.length) {
-                document.getElementById('msg').innerText = "Finish filling all slots!";
-                return;
-            }
-
-            let results = "March Madness 2026 - 68 Team Submission:\n\n";
-            slots.forEach(s => {
-                results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`;
-            });
-
-            emailjs.send("service_n35ji9e", "template_vvxqygc", {
-                message: results,
-                to_email: "burgerman9216@gmail.com"
-            }).then(() => alert("Bracket successfully sent!"), (err) => alert("Error sending bracket."));
+            let res = "March Madness 2026 Submission:\n\n";
+            slots.forEach(s => { res += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`; });
+            emailjs.send("service_n35ji9e", "template_vvxqygc", { message: res, to_email: "burgerman9216@gmail.com" })
+            .then(() => alert("Bracket Sent!"), (err) => alert("Failed. Check EmailJS setup."));
         }
     </script>
 </body>
