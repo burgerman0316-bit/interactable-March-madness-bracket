@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>March Madness 2026 - Mobile Ready</title>
+    <title>March Madness 2026 - B&W Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <style>
         :root {
-            --primary: #ff6600;
-            --bg: #121212;
-            --card: #1e1e1e;
-            --text: #ffffff;
-            --line-color: #444;
+            --bg: #000000;          /* Deep Black Background */
+            --card: #121212;        /* Dark Grey for Containers */
+            --slot-bg: #1a1a1a;     /* Slightly Lighter Grey for Empty Slots */
+            --text-main: #FFFFFF;   /* Pure White Text */
+            --accent: #FFFFFF;      /* White Accents/Lines */
+            --champ-accent: #FFFFFF;/* White Championship Border */
+            
             --slot-width: 110px;
             --slot-height: 26px;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
             margin: 0;
             padding-top: 120px; /* Space for the fixed team bar */
             overflow-x: auto;
         }
+
+        h1 { color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
 
         /* FIXED TEAM BAR FOR MOBILE */
         #team-pool {
@@ -41,7 +45,7 @@
             overflow-y: hidden;
             padding: 10px;
             gap: 10px;
-            border-bottom: 2px solid var(--primary);
+            border-bottom: 2px solid var(--accent);
             z-index: 1000;
             white-space: nowrap;
             align-items: center;
@@ -50,7 +54,8 @@
         .team-card {
             min-width: 100px;
             padding: 8px;
-            background: var(--primary);
+            background: var(--accent); /* White background for the card */
+            color: var(--bg);          /* Black text on the card */
             cursor: grab;
             border-radius: 4px;
             text-align: center;
@@ -58,13 +63,14 @@
             font-weight: bold;
             flex-shrink: 0;
             touch-action: none; /* Crucial for mobile dragging */
+            box-shadow: 0 2px 5px rgba(255,255,255,0.1);
         }
 
         .main-layout {
             display: flex;
             justify-content: center;
-            min-width: 1400px; /* Keeps the bracket from collapsing */
-            padding-bottom: 100px;
+            min-width: 1400px; /* Keeps the bracket from collapsing horizontally */
+            padding-bottom: 120px; /* Space for the submit bar */
         }
 
         .bracket-side { display: flex; flex-direction: row; }
@@ -86,16 +92,27 @@
         .slot {
             width: 100%;
             height: var(--slot-height);
-            background: #2a2a2a;
-            border-bottom: 2px solid var(--primary);
+            background: var(--slot-bg);
+            border-bottom: 2px solid var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 9px;
             z-index: 2;
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+        
+        /* Highlight when a team card (which is white) is dropped in */
+        .slot .team-card {
+            background: transparent;
+            color: var(--text-main);
+            padding: 0;
+            margin: 0;
+            font-weight: bold;
         }
 
-        /* Lines */
+        /* Bracket Line Styling */
         .left .round:not(.final) .slot-wrapper::after {
             content: ""; position: absolute; right: -35px; width: 35px;
             border-right: 2px solid var(--line-color);
@@ -119,17 +136,37 @@
             margin: 0 30px;
         }
 
-        #submit-section {
-            position: fixed; bottom: 0; width: 100%; background: #121212;
-            padding: 15px; text-align: center; border-top: 2px solid var(--primary); z-index: 1000;
+        .champ-title {
+            font-size: 10px; 
+            color: var(--text-main); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 5px;
         }
 
-        button { padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: 20px; font-weight: bold; }
+        /* Submit Button Bar */
+        #submit-section {
+            position: fixed; bottom: 0; width: 100%; background: var(--card);
+            padding: 15px; text-align: center; border-top: 2px solid var(--accent); z-index: 1000;
+        }
+
+        button { 
+            padding: 12px 30px; 
+            background: var(--accent); /* White button */
+            color: var(--bg);          /* Black text */
+            border: none; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer; 
+        }
+
+        button:disabled { background: #555; color: #888; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <!-- Drag from here -->
     <div id="team-pool">
         <div class="team-card">Alabama</div>
         <div class="team-card">Houston</div>
@@ -139,8 +176,7 @@
         <div class="team-card">Arizona</div>
         <div class="team-card">Duke</div>
         <div class="team-card">UNC</div>
-        <!-- Keep adding your 64 teams here -->
-    </div>
+        </div>
 
     <div class="main-layout">
         <div class="bracket-side left">
@@ -152,9 +188,9 @@
         </div>
 
         <div class="center-court">
-            <span style="font-size: 10px; color: gold;">NATIONAL CHAMP</span>
+            <span class="champ-title">NATIONAL CHAMPION</span>
             <div class="slot-wrapper" style="width: 100%;">
-                <div class="slot" style="border: 2px solid gold; height: 45px;" data-id="CHAMPION"></div>
+                <div class="slot" style="border: 2px solid var(--champ-accent); height: 45px;" data-id="CHAMPION"></div>
             </div>
         </div>
 
@@ -169,12 +205,14 @@
 
     <div id="submit-section">
         <button id="submitBtn" onclick="submitBracket()">Submit Bracket</button>
-        <p id="msg" style="color:red; font-size:10px; margin: 5px 0 0 0;"></p>
+        <p id="msg" style="color:#FF4444; font-size:10px; margin: 5px 0 0 0;"></p>
     </div>
 
     <script>
+        // 1. Initialize EmailJS using your Public Key
         (function() { emailjs.init("RsAYqiwym2mViUR8u"); })();
 
+        // 2. Helper function to generate bracket slots per side
         function createSide(prefix, roundsData) {
             roundsData.forEach(round => {
                 const container = document.getElementById(prefix + round.num);
@@ -190,52 +228,70 @@
             });
         }
 
+        // Define the structure for a 64-team tournament split in half
         const bracketData = [
-            {num: 1, count: 16},
-            {num: 2, count: 8},
-            {num: 3, count: 4},
-            {num: 4, count: 2},
-            {num: 5, count: 1}
+            {num: 1, count: 16}, // Round of 64 (per side)
+            {num: 2, count: 8},  // Round of 32 (per side)
+            {num: 3, count: 4},  // Sweet 16 (per side)
+            {num: 4, count: 2},  // Elite 8 (per side)
+            {num: 5, count: 1}   // Final Four (per side)
         ];
 
+        // Generate Left and Right brackets
         createSide('L', bracketData);
         createSide('R', bracketData);
 
+        // 3. Setup SortableJS Drag & Drop
         const pool = document.getElementById('team-pool');
         
-        // Sortable config for Mobile
-        const config = {
+        // Mobile-optimized drag configuration
+        const dragConfig = {
             group: 'bracket',
             animation: 150,
             delay: 100, // 100ms press before drag starts (prevents accidental scrolls)
             delayOnTouchOnly: true,
             onAdd: function(evt) {
+                // Ensure only one team occupies a slot
                 if (evt.to.children.length > 1) {
-                    pool.appendChild(evt.item);
+                    pool.appendChild(evt.item); // Return the newly added item to the pool
                 }
             }
         };
 
-        new Sortable(pool, config);
+        // Initialize the Team Pool
+        new Sortable(pool, dragConfig);
+        
+        // Initialize every generated slot
         document.querySelectorAll('.slot').forEach(slot => {
-            new Sortable(slot, config);
+            new Sortable(slot, dragConfig);
         });
 
+        // 4. Submission Logic
         function submitBracket() {
             const slots = document.querySelectorAll('.slot');
             const filled = Array.from(slots).filter(s => s.children.length > 0);
+            
+            // Validate that the entire bracket is complete
             if (filled.length < slots.length) {
-                document.getElementById('msg').innerText = "Finish filling all slots!";
+                document.getElementById('msg').innerText = "Finish filling all slots before submitting!";
                 return;
             }
 
-            let results = "March Madness 2026 Submission:\n\n";
+            // Gather results from all 63 slots
+            let results = "March Madness 2026 - Black & White Bracket Submission:\n\n";
             slots.forEach(s => results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`);
 
+            // Send via EmailJS using your IDs
             emailjs.send("service_n35ji9e", "template_vvxqygc", {
                 message: results,
-                to_email: "burgerman0316@gmail.com"
-            }).then(() => alert("Bracket sent!"), () => alert("Send failed"));
+                to_email: "burgerman9216@gmail.com"
+            }).then(() => {
+                alert("Success! Your bracket has been sent.");
+                document.getElementById('submitBtn').disabled = true; // Disable after success
+            }, (err) => {
+                alert("Send failed. Check your EmailJS dashboard config.");
+                console.log(err);
+            });
         }
     </script>
 </body>
