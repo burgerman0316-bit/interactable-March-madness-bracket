@@ -3,234 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 March Madness Bracket</title>
+    <title>March Madness Bracket Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
     <style>
         :root {
+            --primary: #ff6600;
             --bg: #121212;
-            --card-bg: #1e1e1e;
-            --border: #333;
-            --accent: #ff6600;
+            --card: #1e1e1e;
             --text: #ffffff;
-            --faded: #888;
         }
 
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        h1 { color: var(--primary); }
 
-        .bracket-wrapper {
+        .container {
             display: flex;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 20px;
+        }
+
+        /* Teams Sidebar */
+        #team-pool {
+            width: 250px;
+            background: var(--card);
+            padding: 15px;
+            border-radius: 8px;
+            height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #333;
+        }
+
+        /* Bracket Layout */
+        #bracket {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
-            overflow-x: auto;
-            padding-bottom: 50px;
-            align-items: flex-start;
         }
 
         .round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
-            min-width: 180px;
-        }
-
-        /* Heights for alignment */
-        .r64 { height: 1800px; }
-        .r32 { height: 1800px; }
-        .s16 { height: 1800px; }
-        .e8  { height: 1800px; }
-        .f4  { height: 1800px; }
-
-        .matchup {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            margin: 10px 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .slot {
-            padding: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-            font-size: 13px;
-        }
-
-        .slot:last-child { border-bottom: none; }
-        .slot:hover { background: #2a2a2a; }
-
-        input[type="radio"] { display: none; }
-        
-        span.seed { color: var(--accent); font-weight: bold; margin-right: 8px; font-size: 11px; }
-        
-        /* Highlight Winner */
-        input[type="radio"]:checked + .team-name { color: var(--accent); font-weight: bold; }
-        input[type="radio"]:checked + .team-name::after { content: " ✓"; font-size: 10px; margin-left: 5px; }
-
-        .submit-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #222;
-            padding: 15px;
-            text-align: center;
-            border-top: 2px solid var(--accent);
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            align-items: center;
-        }
-
-        input[type="text"] {
-            padding: 10px;
+            width: 150px;
+            height: 40px;
+            background: #2a2a2a;
+            border: 1px dashed #555;
+            margin: 10px 0;
             border-radius: 4px;
-            border: 1px solid var(--border);
-            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .team-card {
+            width: 140px;
+            padding: 8px;
+            background: var(--primary);
             color: white;
-            width: 250px;
+            cursor: grab;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            user-select: none;
+        }
+
+        #submit-section {
+            margin-top: 30px;
+            text-align: center;
         }
 
         button {
-            background: var(--accent);
+            padding: 15px 40px;
+            font-size: 18px;
+            background-color: var(--primary);
             color: white;
             border: none;
-            padding: 10px 25px;
-            font-weight: bold;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            text-transform: uppercase;
+            font-weight: bold;
         }
 
-        button:hover { background: #e65c00; }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .error-msg { color: #ff4444; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>2026 National Championship Bracket</h1>
-    <p>Select your winners to advance them to the next round.</p>
-</header>
+    <h1>2026 March Madness Bracket</h1>
+    <div id="deadline-timer"></div>
 
-<form action="https://formspree.io/f/200406@kaneland.org" method="POST">
-    <div class="bracket-wrapper">
-        
-        <div class="round r64">
-            <div class="matchup">
-                <label class="slot">
-                    <span class="seed">1</span>
-                    <input type="radio" name="r1m1" value="Kansas" onchange="advance(this, 'r2m1_s1')" required>
-                    <span class="team-name">Kansas</span>
-                </label>
-                <label class="slot">
-                    <span class="seed">16</span>
-                    <input type="radio" name="r1m1" value="Howard" onchange="advance(this, 'r2m1_s1')">
-                    <span class="team-name">Howard</span>
-                </label>
+    <div class="container">
+        <div id="team-pool">
+            <h3>Teams</h3>
+            <div class="team-card">Alabama</div>
+            <div class="team-card">Houston</div>
+            <div class="team-card">Kansas</div>
+            <div class="team-card">Purdue</div>
+            <div class="team-card">UCLA</div>
+            <div class="team-card">Texas</div>
+            <div class="team-card">Arizona</div>
+            <div class="team-card">UConn</div>
+            <div class="team-card">Gonzaga</div>
+            <div class="team-card">Duke</div>
+            <div class="team-card">Kentucky</div>
+            <div class="team-card">North Carolina</div>
             </div>
-            <div class="matchup">
-                <label class="slot">
-                    <span class="seed">8</span>
-                    <input type="radio" name="r1m2" value="Arkansas" onchange="advance(this, 'r2m1_s2')" required>
-                    <span class="team-name">Arkansas</span>
-                </label>
-                <label class="slot">
-                    <span class="seed">9</span>
-                    <input type="radio" name="r1m2" value="Illinois" onchange="advance(this, 'r2m1_s2')">
-                    <span class="team-name">Illinois</span>
-                </label>
-            </div>
-            <p style="color:var(--faded); font-size:10px; text-align:center;">[Continue adding all R64 Matchups here]</p>
-        </div>
 
-        <div class="round r32">
-            <div class="matchup">
-                <label class="slot">
-                    <input type="radio" name="r2m1" id="r2m1_s1_radio" onchange="advance(this, 'r3m1_s1')" required>
-                    <span class="team-name" id="r2m1_s1">TBD</span>
-                </label>
-                <label class="slot">
-                    <input type="radio" name="r2m1" id="r2m1_s2_radio" onchange="advance(this, 'r3m1_s1')">
-                    <span class="team-name" id="r2m1_s2">TBD</span>
-                </label>
+        <div id="bracket">
+            <div class="round">
+                <h3>Round 1</h3>
+                <div class="slot" data-id="r1-1"></div>
+                <div class="slot" data-id="r1-2"></div>
+                <div class="slot" data-id="r1-3"></div>
+                <div class="slot" data-id="r1-4"></div>
+            </div>
+            <div class="round">
+                <h3>Sweet 16</h3>
+                <div class="slot" data-id="r2-1"></div>
+                <div class="slot" data-id="r2-2"></div>
+            </div>
+            <div class="round">
+                <h3>Final Four</h3>
+                <div class="slot" data-id="r3-1"></div>
+            </div>
+            <div class="round">
+                <h3>Champion</h3>
+                <div class="slot" data-id="champion"></div>
             </div>
         </div>
-
-        <div class="round s16">
-            <div class="matchup">
-                <label class="slot">
-                    <input type="radio" name="r3m1" id="r3m1_s1_radio" onchange="advance(this, 'r4m1_s1')" required>
-                    <span class="team-name" id="r3m1_s1">TBD</span>
-                </label>
-                <label class="slot">
-                    <input type="radio" name="r3m1" id="r3m1_s2_radio" onchange="advance(this, 'r4m1_s1')">
-                    <span class="team-name" id="r3m1_s2">TBD</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="round e8">
-            <div class="matchup">
-                <label class="slot">
-                    <input type="radio" name="r4m1" id="r4m1_s1_radio" onchange="advance(this, 'r5m1_s1')" required>
-                    <span class="team-name" id="r4m1_s1">TBD</span>
-                </label>
-                <label class="slot">
-                    <input type="radio" name="r4m1" id="r4m1_s2_radio" onchange="advance(this, 'r5m1_s1')">
-                    <span class="team-name" id="r4m1_s2">TBD</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="round f4">
-            <div class="matchup" style="border: 2px solid var(--accent);">
-                <div style="background:var(--accent); color:black; font-size:10px; font-weight:bold; text-align:center; padding:2px;">NATIONAL CHAMPION</div>
-                <label class="slot" style="justify-content:center; height:60px;">
-                    <span class="team-name" id="r5m1_s1" style="font-size:18px;">TBD</span>
-                </label>
-            </div>
-        </div>
-
     </div>
 
-    <div class="submit-bar">
-        <input type="text" name="Participant_Name" placeholder="Enter Your Name" required>
-        <input type="number" name="Tie_Breaker_Score" placeholder="Final Score Total" required style="width:120px; padding:10px; border-radius:4px; border:none; background:#333; color:white;">
-        <button type="submit">Submit Final Bracket</button>
+    <div id="submit-section">
+        <button id="submitBtn" onclick="submitBracket()">Submit Bracket</button>
+        <p id="msg" class="error-msg"></p>
     </div>
-</form>
 
-<script>
-    /**
-     * Advances the selected team's name to the next round's slot.
-     * @param {HTMLElement} sender - The radio input clicked
-     * @param {string} targetId - The ID of the span in the next round
-     */
-    function advance(sender, targetId) {
-        const teamName = sender.value;
-        
-        // Find the text span in the NEXT round
-        const targetSpan = document.getElementById(targetId);
-        if (targetSpan) {
-            targetSpan.innerText = teamName;
+    <script>
+        // 1. INITIALIZE EMAILJS (Get your key at emailjs.com)
+        (function() {
+            emailjs.init("YOUR_PUBLIC_KEY"); 
+        })();
+
+        // 2. SETUP DRAG AND DROP
+        const slots = document.querySelectorAll('.slot');
+        const pool = document.getElementById('team-pool');
+
+        new Sortable(pool, {
+            group: 'bracket',
+            animation: 150
+        });
+
+        slots.forEach(slot => {
+            new Sortable(slot, {
+                group: 'bracket',
+                animation: 150,
+                onAdd: function (evt) {
+                    // Only allow one team per slot
+                    if (evt.to.children.length > 1) {
+                        pool.appendChild(evt.item);
+                    }
+                }
+            });
+        });
+
+        // 3. DEADLINE LOGIC (Monday, March 23, 2026)
+        function checkDeadline() {
+            const now = new Date();
+            const deadline = new Date('March 23, 2026 00:00:00');
+            const submitBtn = document.getElementById('submitBtn');
+            const msg = document.getElementById('msg');
+
+            if (now >= deadline) {
+                submitBtn.disabled = true;
+                msg.innerText = "The deadline has passed. Submissions are closed.";
+                return false;
+            }
+            return true;
         }
 
-        // Find the hidden radio button input in the NEXT round so it can be clicked
-        const targetRadio = document.getElementById(targetId + '_radio');
-        if (targetRadio) {
-            targetRadio.value = teamName;
-        }
-    }
-</script>
+        // 4. SUBMIT ACTION
+        function submitBracket() {
+            if (!checkDeadline()) return;
 
+            const filledSlots = Array.from(slots).filter(s => s.children.length > 0);
+            const msg = document.getElementById('msg');
+
+            if (filledSlots.length < slots.length) {
+                msg.innerText = "Please complete the entire bracket before submitting!";
+                return;
+            }
+
+            // Gather the data
+            let bracketData = "Bracket Results:\n";
+            slots.forEach(s => {
+                bracketData += `${s.getAttribute('data-id')}: ${s.innerText}\n`;
+            });
+
+            // Send via EmailJS
+            emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+                message: bracketData,
+                to_email: "your-email@example.com"
+            }).then(() => {
+                alert("Bracket Submitted Successfully!");
+            }, (err) => {
+                alert("Failed to send: " + JSON.stringify(err));
+            });
+        }
+
+        // Run deadline check on load
+        checkDeadline();
+    </script>
 </body>
 </html>
