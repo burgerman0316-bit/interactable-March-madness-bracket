@@ -13,7 +13,8 @@
             --card: #121212;        /* Dark Grey for Containers */
             --slot-bg: #1a1a1a;     /* Slightly Lighter Grey for Empty Slots */
             --text-main: #FFFFFF;   /* Pure White Text */
-            --accent: #FFFFFF;      /* White Accents/Lines */
+            --accent: #FFFFFF;      /* White Accents/Slot Borders */
+            --line-color: #444;     /* FIXED: Line color that is visible against black */
             --champ-accent: #FFFFFF;/* White Championship Border */
             
             --slot-width: 110px;
@@ -103,7 +104,6 @@
             transition: background 0.2s;
         }
         
-        /* Highlight when a team card (which is white) is dropped in */
         .slot .team-card {
             background: transparent;
             color: var(--text-main);
@@ -112,7 +112,7 @@
             font-weight: bold;
         }
 
-        /* Bracket Line Styling */
+        /* Connecting Lines Logic */
         .left .round:not(.final) .slot-wrapper::after {
             content: ""; position: absolute; right: -35px; width: 35px;
             border-right: 2px solid var(--line-color);
@@ -209,10 +209,8 @@
     </div>
 
     <script>
-        // 1. Initialize EmailJS using your Public Key
         (function() { emailjs.init("RsAYqiwym2mViUR8u"); })();
 
-        // 2. Helper function to generate bracket slots per side
         function createSide(prefix, roundsData) {
             roundsData.forEach(round => {
                 const container = document.getElementById(prefix + round.num);
@@ -228,7 +226,6 @@
             });
         }
 
-        // Define the structure for a 64-team tournament split in half
         const bracketData = [
             {num: 1, count: 16}, // Round of 64 (per side)
             {num: 2, count: 8},  // Round of 32 (per side)
@@ -237,59 +234,46 @@
             {num: 5, count: 1}   // Final Four (per side)
         ];
 
-        // Generate Left and Right brackets
         createSide('L', bracketData);
         createSide('R', bracketData);
 
-        // 3. Setup SortableJS Drag & Drop
         const pool = document.getElementById('team-pool');
         
-        // Mobile-optimized drag configuration
         const dragConfig = {
             group: 'bracket',
             animation: 150,
-            delay: 100, // 100ms press before drag starts (prevents accidental scrolls)
+            delay: 100, // Touch delay for mobile
             delayOnTouchOnly: true,
             onAdd: function(evt) {
-                // Ensure only one team occupies a slot
-                if (evt.to.children.length > 1) {
-                    pool.appendChild(evt.item); // Return the newly added item to the pool
-                }
+                if (evt.to.children.length > 1) pool.appendChild(evt.item); 
             }
         };
 
-        // Initialize the Team Pool
         new Sortable(pool, dragConfig);
-        
-        // Initialize every generated slot
         document.querySelectorAll('.slot').forEach(slot => {
             new Sortable(slot, dragConfig);
         });
 
-        // 4. Submission Logic
         function submitBracket() {
             const slots = document.querySelectorAll('.slot');
             const filled = Array.from(slots).filter(s => s.children.length > 0);
             
-            // Validate that the entire bracket is complete
             if (filled.length < slots.length) {
                 document.getElementById('msg').innerText = "Finish filling all slots before submitting!";
                 return;
             }
 
-            // Gather results from all 63 slots
-            let results = "March Madness 2026 - Black & White Bracket Submission:\n\n";
+            let results = "March Madness 2026 Submission:\n\n";
             slots.forEach(s => results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`);
 
-            // Send via EmailJS using your IDs
             emailjs.send("service_n35ji9e", "template_vvxqygc", {
                 message: results,
-                to_email: "burgerman9216@gmail.com"
+                to_email: "burgerman0316@gmail.com"
             }).then(() => {
-                alert("Success! Your bracket has been sent.");
-                document.getElementById('submitBtn').disabled = true; // Disable after success
+                alert("Success!");
+                document.getElementById('submitBtn').disabled = true;
             }, (err) => {
-                alert("Send failed. Check your EmailJS dashboard config.");
+                alert("Send failed.");
                 console.log(err);
             });
         }
