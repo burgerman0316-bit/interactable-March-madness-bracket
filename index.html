@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>March Madness Bracket Builder</title>
+    <title>March Madness 2026</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
@@ -13,101 +13,124 @@
             --bg: #121212;
             --card: #1e1e1e;
             --text: #ffffff;
-            --border: #333;
+            --line-color: #444;
+            --slot-width: 140px;
+            --slot-height: 32px;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
+        .header { text-align: center; padding: 20px; }
+
         .main-layout {
             display: flex;
+            width: 98%;
             gap: 20px;
-            width: 100%;
-            align-items: flex-start;
+            padding-bottom: 100px;
         }
 
-        /* Team Sidebar */
         #team-pool {
-            width: 200px;
+            width: 180px;
             background: var(--card);
             padding: 15px;
             border-radius: 8px;
-            height: 90vh;
+            height: 85vh;
             overflow-y: auto;
-            border: 2px solid var(--border);
+            border: 2px solid #333;
             position: sticky;
             top: 20px;
         }
 
         .team-card {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             background: var(--primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             cursor: grab;
             border-radius: 4px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
         }
 
-        /* Bracket Grid */
         #bracket-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(6, var(--slot-width));
+            gap: 0 50px;
             flex-grow: 1;
-            justify-content: space-between;
-            overflow-x: auto;
-            padding: 20px;
-            background: #181818;
-            border-radius: 10px;
+            align-items: center;
         }
 
         .round {
             display: flex;
             flex-direction: column;
+            height: 100%;
             justify-content: space-around;
-            min-width: 160px;
         }
 
-        .round-title {
-            text-align: center;
-            font-size: 14px;
-            color: var(--primary);
-            margin-bottom: 10px;
-            text-transform: uppercase;
+        .slot-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .slot {
-            width: 140px;
-            height: 35px;
+            width: var(--slot-width);
+            height: var(--slot-height);
             background: #2a2a2a;
-            border: 1px dashed #555;
-            margin: 5px auto;
-            border-radius: 4px;
+            border-bottom: 2px solid var(--line-color);
+            margin: 12px 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
+            z-index: 2;
         }
 
-        /* Championship Highlight */
+        /* Bracket Line Logic */
+        .round:not(:last-child) .slot-wrapper::after {
+            content: "";
+            position: absolute;
+            right: -50px;
+            width: 50px;
+            border-right: 2px solid var(--line-color);
+            z-index: 1;
+        }
+
+        .round:not(:last-child) .slot-wrapper:nth-child(odd)::after {
+            top: 50%;
+            height: 50%; /* Reaches down */
+            border-top: 2px solid var(--line-color);
+        }
+
+        .round:not(:last-child) .slot-wrapper:nth-child(even)::after {
+            bottom: 50%;
+            height: 50%; /* Reaches up */
+            border-bottom: 2px solid var(--line-color);
+        }
+
         .champion-slot {
-            border: 2px solid var(--primary);
+            border: 2px solid var(--primary) !important;
             height: 50px;
-            background: #333;
         }
 
         #submit-section {
-            margin: 40px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: rgba(18, 18, 18, 0.95);
+            padding: 20px;
             text-align: center;
+            border-top: 1px solid #333;
+            z-index: 100;
         }
 
         button {
@@ -118,81 +141,72 @@
             border-radius: 30px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 16px;
         }
 
-        button:disabled { background: #444; cursor: not-allowed; }
-        .error { color: #ff4444; margin-top: 10px; }
+        button:disabled { background: #444; }
     </style>
 </head>
 <body>
 
-    <h1>2026 Bracket Challenge</h1>
-    <p>Deadline: Monday, March 23rd</p>
+    <div class="header">
+        <h1>March Madness Bracket 2026</h1>
+        <p>Drag teams to complete the bracket before Monday!</p>
+    </div>
 
     <div class="main-layout">
         <div id="team-pool">
-            <div class="round-title">Available Teams</div>
+            <h3 style="font-size: 14px; text-align: center;">Teams</h3>
+            <!-- Add your 64 teams here -->
             <div class="team-card">Team 1</div>
             <div class="team-card">Team 2</div>
-            </div>
+            <div class="team-card">Team 3</div>
+        </div>
 
         <div id="bracket-container">
-            <div class="round" id="r1">
-                <div class="round-title">Round 1</div>
-                </div>
-
-            <div class="round" id="r2">
-                <div class="round-title">Round 2</div>
-            </div>
-
-            <div class="round" id="r3">
-                <div class="round-title">Sweet 16</div>
-            </div>
-
-            <div class="round" id="r4">
-                <div class="round-title">Elite 8</div>
-            </div>
-
-            <div class="round" id="r5">
-                <div class="round-title">Final Four</div>
-            </div>
-
+            <div class="round" id="r1"></div>
+            <div class="round" id="r2"></div>
+            <div class="round" id="r3"></div>
+            <div class="round" id="r4"></div>
+            <div class="round" id="r5"></div>
             <div class="round" id="r6">
-                <div class="round-title">Champion</div>
-                <div class="slot champion-slot" data-id="CHAMPION"></div>
+                <div class="slot-wrapper">
+                    <div class="slot champion-slot" data-id="CHAMPION"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="submit-section">
-        <button id="submitBtn" onclick="submitBracket()">Email My Bracket</button>
-        <div id="msg" class="error"></div>
+        <button id="submitBtn" onclick="submitBracket()">Submit Bracket</button>
+        <div id="msg" style="color: #ff4444; font-size: 13px; margin-top: 8px;"></div>
     </div>
 
     <script>
-        // Initialize EmailJS
-        (function() { emailjs.init("RsAYqiwym2mViUR8u"); })();
+        // Initializing with your Public Key from screenshot
+        (function() { 
+            emailjs.init("RsAYqiwym2mViUR8u"); 
+        })();
 
-        // Helper to generate slots
-        function createSlots(containerId, count, prefix) {
+        function createBracket(containerId, count, prefix) {
             const container = document.getElementById(containerId);
             for(let i=1; i<=count; i++) {
-                const div = document.createElement('div');
-                div.className = 'slot';
-                div.setAttribute('data-id', `${prefix}-${i}`);
-                container.appendChild(div);
+                const wrapper = document.createElement('div');
+                wrapper.className = 'slot-wrapper';
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.setAttribute('data-id', `${prefix}-${i}`);
+                wrapper.appendChild(slot);
+                container.appendChild(wrapper);
             }
         }
 
-        // Build the structure
-        createSlots('r1', 32, 'R1');
-        createSlots('r2', 16, 'R2');
-        createSlots('r3', 8, 'S16');
-        createSlots('r4', 4, 'E8');
-        createSlots('r5', 2, 'F4');
+        createBracket('r1', 32, 'RD1');
+        createBracket('r2', 16, 'RD2');
+        createBracket('r3', 8, 'S16');
+        createBracket('r4', 4, 'E8');
+        createBracket('r5', 2, 'F4');
 
-        // Setup Drag and Drop
         const allSlots = document.querySelectorAll('.slot');
         const pool = document.getElementById('team-pool');
 
@@ -215,7 +229,7 @@
             const deadline = new Date('March 23, 2026 00:00:00');
             if (now >= deadline) {
                 document.getElementById('submitBtn').disabled = true;
-                document.getElementById('msg').innerText = "Deadline passed!";
+                document.getElementById('msg').innerText = "Deadline has passed.";
                 return false;
             }
             return true;
@@ -225,22 +239,27 @@
             if (!checkDeadline()) return;
 
             const slots = document.querySelectorAll('.slot');
-            const empty = Array.from(slots).find(s => s.children.length === 0);
+            const filled = Array.from(slots).filter(s => s.children.length > 0);
 
-            if (empty) {
-                document.getElementById('msg').innerText = "Finish the bracket first!";
+            if (filled.length < slots.length) {
+                document.getElementById('msg').innerText = `Finish the bracket! ${slots.length - filled.length} spots left.`;
                 return;
             }
 
-            let results = "User Bracket Selection:\n\n";
+            let results = "March Madness 2026 Bracket Selection:\n\n";
             slots.forEach(s => {
                 results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`;
             });
 
+            // Using your Service and Template IDs from screenshot
             emailjs.send("service_n35ji9e", "template_vvxqygc", {
                 message: results,
-                to_email: "burgerman0316@gmail.com"
-            }).then(() => alert("Submitted!"), (err) => alert("Error: " + err));
+                to_email: "burgerman9216@gmail.com"
+            }).then(() => {
+                alert("Success! Your bracket has been sent.");
+            }, (err) => {
+                alert("Email failed to send. Check your EmailJS dashboard.");
+            });
         }
 
         checkDeadline();
