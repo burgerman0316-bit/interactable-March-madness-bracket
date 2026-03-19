@@ -3,182 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>March Madness 2026 - B&W Edition</title>
+    <title>March Madness 2026 - 68 Teams</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <style>
         :root {
-            --bg: #000000;          /* Deep Black Background */
-            --card: #121212;        /* Dark Grey for Containers */
-            --slot-bg: #1a1a1a;     /* Slightly Lighter Grey for Empty Slots */
-            --text-main: #FFFFFF;   /* Pure White Text */
-            --accent: #FFFFFF;      /* White Accents/Slot Borders */
-            --line-color: #444;     /* FIXED: Line color that is visible against black */
-            --champ-accent: #FFFFFF;/* White Championship Border */
-            
+            --bg: #000000;
+            --card: #121212;
+            --slot-bg: #1a1a1a;
+            --text: #FFFFFF;
+            --accent: #FFFFFF;
+            --line-color: #444;
             --slot-width: 110px;
             --slot-height: 26px;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
-            color: var(--text-main);
+            color: var(--text);
             margin: 0;
-            padding-top: 120px; /* Space for the fixed team bar */
+            padding-top: 130px; /* Space for the fixed team bar */
             overflow-x: auto;
         }
 
-        h1 { color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
-
-        /* FIXED TEAM BAR FOR MOBILE */
+        /* FIXED TEAM POOL */
         #team-pool {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            background: var(--card);
-            display: flex;
-            flex-direction: row;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 10px;
-            gap: 10px;
-            border-bottom: 2px solid var(--accent);
-            z-index: 1000;
-            white-space: nowrap;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 110px;
+            background: var(--card); display: flex; flex-direction: row;
+            overflow-x: auto; padding: 10px; gap: 10px;
+            border-bottom: 2px solid var(--accent); z-index: 1000; align-items: center;
         }
 
         .team-card {
-            min-width: 100px;
-            padding: 8px;
-            background: var(--accent); /* White background for the card */
-            color: var(--bg);          /* Black text on the card */
-            cursor: grab;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 10px;
-            font-weight: bold;
-            flex-shrink: 0;
-            touch-action: none; /* Crucial for mobile dragging */
-            box-shadow: 0 2px 5px rgba(255,255,255,0.1);
+            min-width: 100px; padding: 8px; background: var(--accent);
+            color: var(--bg); cursor: grab; border-radius: 4px;
+            text-align: center; font-size: 10px; font-weight: bold; flex-shrink: 0;
+            touch-action: none;
         }
 
-        .main-layout {
-            display: flex;
-            justify-content: center;
-            min-width: 1400px; /* Keeps the bracket from collapsing horizontally */
-            padding-bottom: 120px; /* Space for the submit bar */
+        /* FIRST FOUR SECTION */
+        .play-in-header { text-align: center; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; }
+        .play-in-container {
+            display: flex; justify-content: center; gap: 15px; padding: 20px;
+            border-bottom: 1px solid var(--line-color); margin-bottom: 30px;
         }
+        .play-in-game { width: 120px; text-align: center; }
+        .play-in-label { font-size: 8px; color: #888; margin-bottom: 4px; }
 
+        /* MAIN BRACKET */
+        .main-layout { display: flex; justify-content: center; min-width: 1500px; padding-bottom: 120px; }
         .bracket-side { display: flex; flex-direction: row; }
         .bracket-side.right { flex-direction: row-reverse; }
-
         .round { display: flex; flex-direction: column; width: var(--slot-width); }
+        
         .round:not(.final) { margin-right: 35px; }
         .right .round:not(.final) { margin-right: 0; margin-left: 35px; }
 
         .slot-wrapper {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            flex-grow: 1;
-            position: relative;
-            min-height: 35px;
+            display: flex; flex-direction: column; justify-content: center;
+            flex-grow: 1; position: relative; min-height: 35px;
         }
 
         .slot {
-            width: 100%;
-            height: var(--slot-height);
-            background: var(--slot-bg);
-            border-bottom: 2px solid var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            z-index: 2;
-            color: var(--text-main);
-            transition: background 0.2s;
-        }
-        
-        .slot .team-card {
-            background: transparent;
-            color: var(--text-main);
-            padding: 0;
-            margin: 0;
-            font-weight: bold;
+            width: 100%; height: var(--slot-height); background: var(--slot-bg);
+            border-bottom: 2px solid var(--accent); display: flex;
+            align-items: center; justify-content: center; font-size: 9px;
+            z-index: 2; color: var(--text);
         }
 
-        /* Connecting Lines Logic */
+        .slot .team-card { background: transparent; color: var(--text); padding: 0; min-width: auto; }
+
+        /* LINES */
         .left .round:not(.final) .slot-wrapper::after {
-            content: ""; position: absolute; right: -35px; width: 35px;
-            border-right: 2px solid var(--line-color);
+            content: ""; position: absolute; right: -35px; width: 35px; border-right: 2px solid var(--line-color);
         }
         .left .slot-wrapper:nth-child(odd)::after { top: 50%; height: 50%; border-top: 2px solid var(--line-color); }
         .left .slot-wrapper:nth-child(even)::after { bottom: 50%; height: 50%; border-bottom: 2px solid var(--line-color); }
 
         .right .round:not(.final) .slot-wrapper::after {
-            content: ""; position: absolute; left: -35px; width: 35px;
-            border-left: 2px solid var(--line-color);
+            content: ""; position: absolute; left: -35px; width: 35px; border-left: 2px solid var(--line-color);
         }
         .right .slot-wrapper:nth-child(odd)::after { top: 50%; height: 50%; border-top: 2px solid var(--line-color); }
         .right .slot-wrapper:nth-child(even)::after { bottom: 50%; height: 50%; border-bottom: 2px solid var(--line-color); }
 
-        .center-court {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 160px;
-            margin: 0 30px;
-        }
+        .center-court { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 160px; margin: 0 30px; }
 
-        .champ-title {
-            font-size: 10px; 
-            color: var(--text-main); 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            margin-bottom: 5px;
-        }
-
-        /* Submit Button Bar */
         #submit-section {
             position: fixed; bottom: 0; width: 100%; background: var(--card);
             padding: 15px; text-align: center; border-top: 2px solid var(--accent); z-index: 1000;
         }
-
-        button { 
-            padding: 12px 30px; 
-            background: var(--accent); /* White button */
-            color: var(--bg);          /* Black text */
-            border: none; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer; 
-        }
-
-        button:disabled { background: #555; color: #888; cursor: not-allowed; }
+        button { padding: 12px 30px; background: var(--accent); color: var(--bg); border: none; border-radius: 20px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
+    <!-- Team Pool: Populate with all 68 Teams -->
     <div id="team-pool">
-        <div class="team-card">Alabama</div>
+        <div class="team-card">Duke</div>
+        <div class="team-card">Kansas</div>
         <div class="team-card">Houston</div>
         <div class="team-card">UConn</div>
         <div class="team-card">Purdue</div>
-        <div class="team-card">Kansas</div>
+        <div class="team-card">Alabama</div>
         <div class="team-card">Arizona</div>
-        <div class="team-card">Duke</div>
         <div class="team-card">UNC</div>
+        <!-- ... add the rest here ... -->
+    </div>
+
+    <div class="play-in-header">The First Four</div>
+    <div class="play-in-container">
+        <!-- Game 1 & 2 feed into Left Bracket, Game 3 & 4 into Right Bracket -->
+        <div class="play-in-game">
+            <div class="play-in-label">GAME 1</div>
+            <div class="slot" data-id="FF1-A"></div>
+            <div class="slot" data-id="FF1-B"></div>
         </div>
+        <div class="play-in-game">
+            <div class="play-in-label">GAME 2</div>
+            <div class="slot" data-id="FF2-A"></div>
+            <div class="slot" data-id="FF2-B"></div>
+        </div>
+        <div class="play-in-game">
+            <div class="play-in-label">GAME 3</div>
+            <div class="slot" data-id="FF3-A"></div>
+            <div class="slot" data-id="FF3-B"></div>
+        </div>
+        <div class="play-in-game">
+            <div class="play-in-label">GAME 4</div>
+            <div class="slot" data-id="FF4-A"></div>
+            <div class="slot" data-id="FF4-B"></div>
+        </div>
+    </div>
 
     <div class="main-layout">
+        <!-- Left Side: 32 Teams (16 slots) -->
         <div class="bracket-side left">
             <div class="round" id="L1"></div>
             <div class="round" id="L2"></div>
@@ -188,12 +148,13 @@
         </div>
 
         <div class="center-court">
-            <span class="champ-title">NATIONAL CHAMPION</span>
+            <span style="font-size: 10px; margin-bottom: 5px; letter-spacing: 1px;">NATIONAL CHAMPION</span>
             <div class="slot-wrapper" style="width: 100%;">
-                <div class="slot" style="border: 2px solid var(--champ-accent); height: 45px;" data-id="CHAMPION"></div>
+                <div class="slot" style="border: 2px solid var(--accent); height: 50px;" data-id="CHAMPION"></div>
             </div>
         </div>
 
+        <!-- Right Side: 32 Teams (16 slots) -->
         <div class="bracket-side right">
             <div class="round" id="R1"></div>
             <div class="round" id="R2"></div>
@@ -204,8 +165,8 @@
     </div>
 
     <div id="submit-section">
-        <button id="submitBtn" onclick="submitBracket()">Submit Bracket</button>
-        <p id="msg" style="color:#FF4444; font-size:10px; margin: 5px 0 0 0;"></p>
+        <button onclick="submitBracket()">Submit 68-Team Bracket</button>
+        <p id="msg" style="color:#FF4444; font-size:10px; margin-top:5px;"></p>
     </div>
 
     <script>
@@ -227,55 +188,43 @@
         }
 
         const bracketData = [
-            {num: 1, count: 16}, // Round of 64 (per side)
-            {num: 2, count: 8},  // Round of 32 (per side)
-            {num: 3, count: 4},  // Sweet 16 (per side)
-            {num: 4, count: 2},  // Elite 8 (per side)
-            {num: 5, count: 1}   // Final Four (per side)
+            {num: 1, count: 16}, // Round of 64 per side
+            {num: 2, count: 8},
+            {num: 3, count: 4},
+            {num: 4, count: 2},
+            {num: 5, count: 1}
         ];
 
         createSide('L', bracketData);
         createSide('R', bracketData);
 
         const pool = document.getElementById('team-pool');
-        
         const dragConfig = {
-            group: 'bracket',
-            animation: 150,
-            delay: 100, // Touch delay for mobile
-            delayOnTouchOnly: true,
-            onAdd: function(evt) {
-                if (evt.to.children.length > 1) pool.appendChild(evt.item); 
-            }
+            group: 'bracket', animation: 150, delay: 100, delayOnTouchOnly: true,
+            onAdd: function(evt) { if (evt.to.children.length > 1) pool.appendChild(evt.item); }
         };
 
         new Sortable(pool, dragConfig);
-        document.querySelectorAll('.slot').forEach(slot => {
-            new Sortable(slot, dragConfig);
-        });
+        document.querySelectorAll('.slot').forEach(slot => { new Sortable(slot, dragConfig); });
 
         function submitBracket() {
             const slots = document.querySelectorAll('.slot');
             const filled = Array.from(slots).filter(s => s.children.length > 0);
             
             if (filled.length < slots.length) {
-                document.getElementById('msg').innerText = "Finish filling all slots before submitting!";
+                document.getElementById('msg').innerText = "Finish filling all slots!";
                 return;
             }
 
-            let results = "March Madness 2026 Submission:\n\n";
-            slots.forEach(s => results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`);
+            let results = "March Madness 2026 - 68 Team Submission:\n\n";
+            slots.forEach(s => {
+                results += `${s.getAttribute('data-id')}: ${s.innerText.trim()}\n`;
+            });
 
             emailjs.send("service_n35ji9e", "template_vvxqygc", {
                 message: results,
-                to_email: "burgerman0316@gmail.com"
-            }).then(() => {
-                alert("Success!");
-                document.getElementById('submitBtn').disabled = true;
-            }, (err) => {
-                alert("Send failed.");
-                console.log(err);
-            });
+                to_email: "burgerman9216@gmail.com"
+            }).then(() => alert("Bracket successfully sent!"), (err) => alert("Error sending bracket."));
         }
     </script>
 </body>
