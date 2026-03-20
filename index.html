@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>March Madness 2026 - Logic Enforced</title>
+    <title>March Madness 2026 - Steady Zoom Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -39,7 +39,13 @@
         #line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         #submit-section { position: fixed; bottom: 0; width: 100%; background: #000; padding: 15px; text-align: center; border-top: 2px solid #333; z-index: 9998; }
         button { padding: 8px 15px; background: #fff; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 0 5px; }
-        #zoom-ui { position: fixed; bottom: 85px; right: 25px; z-index: 9999; background: #222; padding: 10px; border: 1px solid #fff; border-radius: 5px; }
+        
+        /* Zoom UI - Isolated from Panning */
+        #zoom-ui { 
+            position: fixed; bottom: 85px; right: 25px; z-index: 10000; 
+            background: #222; padding: 15px; border: 1px solid #fff; border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
 
         body.snap-mode { --bg: #fff; --text: #000; --line: #000; background: #fff !important; }
         body.snap-mode .slot { background: #eee !important; border-bottom: 2px solid #000 !important; color: #000; }
@@ -50,12 +56,15 @@
 
 <div id="team-pool">
     <script>
-        const teams = ["Alabama","App St","Arizona","Arkansas","Auburn","Baylor","Boise St","Charleston","Clemson","Colo St","Colorado","Creighton","Dayton","Drake","Duke","Duquesne","FAU","Florida","Gonzaga","Grambling","Grand Canyon","Houston","Howard","Illinois","Indiana","Iowa St","Kansas","Kentucky","Longwood","Marquette","Maryland","McNeese","Memphis","Miami","Michigan St","Montana St","Morehead St","NC State","Norfolk St","Oakland","Oregon","Purdue","Samford","SDSU","St Johns","St Marys","St Peters","Stetson","TCU","Tennessee","Tex South","Texas","Texas A&M","UAB","UCLA","UConn","UNC","Utah St","Vermont","Villanova","Virginia","Wagner","Wash St","Wisconsin","WKU","Xavier","Yale"];
+        const teams = ["Alabama","Arizona","Arkansas","Auburn","Baylor","Boise St","Charleston","Clemson","Colo St","Colorado","Creighton","Dayton","Drake","Duke","Duquesne","FAU","Florida","Gonzaga","Houston","Illinois","Indiana","Iowa St","Kansas","Kentucky","Marquette","Michigan St","NC State","Oakland","Oregon","Purdue","SDSU","St Marys","TCU","Tennessee","Texas","Texas A&M","UCLA","UConn","UNC","Utah St","Vermont","Virginia","Wisconsin","Xavier"];
         teams.sort().forEach(t => document.write(`<div class="team-card">${t}</div>`));
     </script>
 </div>
 
-<div id="zoom-ui"><input type="range" id="zoom-slider" min="0.3" max="1.1" step="0.05" value="0.5"></div>
+<div id="zoom-ui">
+    <label style="font-size:10px; display:block; margin-bottom:5px;">ZOOM</label>
+    <input type="range" id="zoom-slider" min="0.3" max="1.1" step="0.01" value="0.5">
+</div>
 
 <div id="bracket-viewport">
     <div id="bracket-content">
@@ -63,8 +72,8 @@
             <svg id="line-svg"></svg>
             <div class="round" id="L1"></div><div class="round" id="L2"></div><div class="round" id="L3"></div><div class="round" id="L4"></div><div class="round" id="L5"></div>
             <div style="display:flex; flex-direction:column; justify-content:center; width:220px; margin:0 30px; text-align:center; z-index:2;">
-                <div class="slot" id="CHAMPION" data-round="CHAMP" style="height:55px; border:3px solid var(--line); justify-content:center; font-size:16px;"></div>
-                <h3 style="color:var(--text); margin-top:10px;">2026 WINNER</h3>
+                <div class="slot" id="CHAMPION" style="height:55px; border:3px solid var(--line); justify-content:center; font-size:16px;"></div>
+                <h3 style="color:var(--text); margin-top:10px;">2026 WINNING TEAM</h3>
             </div>
             <div class="round" id="R5"></div><div class="round" id="R4"></div><div class="round" id="R3"></div><div class="round" id="R2"></div><div class="round" id="R1"></div>
         </div>
@@ -72,13 +81,14 @@
 </div>
 
 <div id="submit-section">
-    <button id="send-btn" onclick="sendBracket()">SUBMIT BRACKET</button>
-    <button onclick="downloadPDF()">Download as a PDF</button>
+    <button id="send-btn" onclick="sendBracket()">Submit Bracket</button>
+    <button onclick="downloadPDF()">Download PDF</button>
 </div>
 
 <script>
     (function() { emailjs.init("RsAYqiwym2mViUR8u"); })();
 
+    // Build the bracket
     function build(id, count) {
         const r = document.getElementById(id);
         const roundNum = parseInt(id.slice(1));
@@ -86,9 +96,7 @@
         for(let i=0; i<count; i++) {
             const s = document.createElement('div');
             s.className = 'slot';
-            s.dataset.round = roundNum;
-            s.dataset.side = side;
-            s.dataset.index = i;
+            s.dataset.round = roundNum; s.dataset.side = side; s.dataset.index = i;
             s.ondblclick = function() { this.innerHTML = ''; };
             r.appendChild(s);
         }
@@ -96,47 +104,43 @@
     [16,8,4,2,1].forEach((n,i) => build('L'+(i+1), n));
     [1,2,4,8,16].forEach((n,i) => build('R'+(5-i), n));
 
-    new Sortable(document.getElementById('team-pool'), {
-        group: { name: 'teams', pull: 'clone', put: false },
-        sort: false, animation: 150
-    });
-
+    // Sortable Config
+    new Sortable(document.getElementById('team-pool'), { group: { name: 'teams', pull: 'clone', put: false }, sort: false });
     document.querySelectorAll('.slot').forEach(s => {
         new Sortable(s, {
-            group: 'teams', animation: 150,
-            onAdd: function(evt) {
+            group: 'teams',
+            onAdd: (evt) => {
                 const team = evt.item.innerText;
-                const r = parseInt(s.dataset.round) || 6; 
+                const r = parseInt(s.dataset.round) || 6;
                 const side = s.dataset.side || 'C';
                 const idx = parseInt(s.dataset.index);
 
-                // PARENT VALIDATION LOGIC
+                // Validation Logic
                 if (r > 1 && side !== 'C') {
                     const prevRound = document.getElementById(side + (r - 1));
                     const p1 = prevRound.children[idx * 2].innerText;
                     const p2 = prevRound.children[idx * 2 + 1].innerText;
-                    if (team !== p1 && team !== p2) {
-                        alert("Logic Error: This team didn't play in the previous round's matchup!");
-                        evt.item.remove(); return;
-                    }
-                } else if (side === 'C') { // Championship special check
+                    if (team !== p1 && team !== p2) { alert("Team must win the previous round!"); evt.item.remove(); return; }
+                } else if (side === 'C') {
                     const p1 = document.getElementById('L5').children[0].innerText;
                     const p2 = document.getElementById('R5').children[0].innerText;
-                    if (team !== p1 && team !== p2) {
-                        alert("Only the Finalists can be Champions!");
-                        evt.item.remove(); return;
-                    }
+                    if (team !== p1 && team !== p2) { alert("Only finalists can win!"); evt.item.remove(); return; }
                 }
                 while (s.children.length > 1) { s.removeChild(s.firstChild); }
             }
         });
     });
 
-    // Viewport & Pan/Zoom Logic
+    // Panning & Zoom Controls
     const content = document.getElementById('bracket-content');
     const viewport = document.getElementById('bracket-viewport');
     const zoomS = document.getElementById('zoom-slider');
+    const zoomUI = document.getElementById('zoom-ui');
     let sc = 0.5, x = 0, y = 0, isP = false, sx, sy;
+
+    // FIX: Stop the zoom UI from interfering with the bracket panning
+    zoomUI.addEventListener('mousedown', (e) => e.stopPropagation());
+    zoomUI.addEventListener('mousemove', (e) => e.stopPropagation());
 
     const draw = () => { 
         const vw = viewport.clientWidth, vh = viewport.clientHeight;
@@ -145,7 +149,6 @@
         if (y > 100) y = 100; if (y < vh - ch - 100) y = vh - ch - 100;
         content.style.transform = `translate(${x}px, ${y}px) scale(${sc})`; renderLines();
     };
-    draw();
 
     zoomS.oninput = (e) => { sc = parseFloat(e.target.value); draw(); };
     viewport.onmousedown = (e) => { if(!e.target.closest('.slot') && !e.target.closest('.team-card')) { isP=true; sx=e.clientX-x; sy=e.clientY-y; } };
@@ -172,36 +175,38 @@
         };
         [['L1','L2'],['L2','L3'],['L3','L4'],['L4','L5']].forEach(p => drawSide(p[0], p[1], 'L'));
         [['R1','R2'],['R2','R3'],['R3','R4'],['R4','R5']].forEach(p => drawSide(p[0], p[1], 'R'));
+        draw(); // Initial call
     }
+    window.onload = draw;
 
+    // Export Functions (Same logic as before)
     async function sendBracket() {
         const slots = document.querySelectorAll('.slot');
         let empty = 0; slots.forEach(s => { if(s.innerText.trim() === "") empty++; });
-        if(empty > 0) { alert(`Complete the bracket! ${empty} spots left.`); return; }
+        if(empty > 0) { alert(`Complete the bracket! ${empty} left.`); return; }
         const btn = document.getElementById('send-btn'); btn.innerText = "SENDING...";
-        const oldX = x, oldY = y, oldSc = sc; x = 0; y = 0; sc = 1;
+        const oX = x, oY = y, oS = sc; x = 0; y = 0; sc = 1;
         content.style.transform = "none"; document.body.classList.add('snap-mode'); renderLines();
         setTimeout(async () => {
             try {
                 const canvas = await html2canvas(document.getElementById('capture-area'), { backgroundColor: "#ffffff", scale: 0.8 });
-                const imgData = canvas.toDataURL('image/jpeg', 0.15);
-                await emailjs.send("service_n35ji9e", "template_vvxqygc", { bracket_image: imgData, to_email: "burgerman9216@gmail.com" });
-                alert("SUCCESS! SENT TO BURGERMAN.");
-            } catch (e) { alert("Email Failed."); }
-            x = oldX; y = oldY; sc = oldSc; document.body.classList.remove('snap-mode'); draw();
+                await emailjs.send("service_n35ji9e", "template_vvxqygc", { bracket_image: canvas.toDataURL('image/jpeg', 0.15), to_email: "burgerman9216@gmail.com" });
+                alert("SUCCESS! SENT.");
+            } catch (e) { alert("Failed."); }
+            x = oX; y = oY; sc = oS; document.body.classList.remove('snap-mode'); draw();
             btn.innerText = "Email BurgerMan";
         }, 500);
     }
 
     async function downloadPDF() {
-        const oldX = x, oldY = y, oldSc = sc; x = 0; y = 0; sc = 1;
+        const oX = x, oY = y, oS = sc; x = 0; y = 0; sc = 1;
         content.style.transform = "none"; document.body.classList.add('snap-mode'); renderLines();
         setTimeout(async () => {
             const canvas = await html2canvas(document.getElementById('capture-area'), { scale: 1.2 });
             const pdf = new jspdf.jsPDF('l', 'mm', 'a2');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 400, 280);
             pdf.save("Bracket_2026.pdf");
-            x = oldX; y = oldY; sc = oldSc; document.body.classList.remove('snap-mode'); draw();
+            x = oX; y = oY; sc = oS; document.body.classList.remove('snap-mode'); draw();
         }, 500);
     }
 </script>
